@@ -1,43 +1,55 @@
-from .unparse.combinators import (many0,  optional,  pure,
-                                  seq,       alt,   error,
-                                  seq2L,  position,  not0,  many1, bind,
-                                  zero)
+from .unparse.combinators import (many0,  pure,  seq,  alt,
+                                  error,  zero,  bind,
+                                  seq2L,  position,  not0,  many1)
 from .unparse.cst import (node, cut)
 
+(item, literal) = (position.item, position.literal)
+(oneOf, not1) = (position.oneOf, position.not1)
 
-(item, literal, satisfy) = (position.item, position.literal, position.satisfy)
-(oneOf, not1, string) = (position.oneOf, position.not1, position.string)
 
-space = oneOf(' \t')
+#### some preliminaries
+
+space         = oneOf(' \t')
 not_in_string = oneOf('\n\r\f\t\v <>')
-newline = oneOf('\n\r\f')
-end = not0(item)
+end           = not0(item)
+
+
+#### tokens -- can be followed by spaces
 
 def munch(tok):
-    return seq2L(tok, optional(space))
+    return seq2L(tok, many0(space))
 
-def tag(p):
-    return node('tag',
-                 ('open' , literal('<')     ),
-                 ('value', p                ),
-                 ('close', literal('>')     ),
-                 ('end'  , alt(newline, end)))
+newline, lt, gt = map(munch, [oneOf('\n\r\f'), literal('<'), literal('>')])
 
-str_ = node('string',
-            ('text', munch(many1(not1(not_in_string)))))
+string = node('string',
+               ('text', munch(many1(not1(not_in_string)))))
+
+def string_c(value):
+    """
+    A string of `value`
+    """
+    return check(lambda s: s['text'] == value, string)
+
+
+#### hierarchical forms
+
+def tag(*ps):
+    children = [('open', lt)] + ps + [('close', gt), ('end', alt(newline, end))]
+    return node('tag', *children)
 
 line = node('line',
-             ('strings', many1(str_)),
-             ('newline', newline))
+             ('strings', many1(string)),
+             ('newline', newline      ))
 
 block = error('forward declaration for mutual recursion -- replace')
 
 datum = alt(block, line)
 
 _block = node('block',
-               ('open', tag(str_)),
-               ('body', many0(datum)),
-               ('close', tag([munch(string('end')), str_]))) # TODO should this be a node?  so that `block_check` can get the data easily
+               ('open' , tag(('name', string))     ),
+               ('body' , many0(datum)              ),
+               ('close', tag(('en', string_c('end')), 
+                             ('name', string))))
 
 def block_check(e):
     if e['open']['name'] == e['close']['name']:
@@ -46,11 +58,12 @@ def block_check(e):
 
 block.parse = bind(_block, block_check).parse
 
-version = tag([munch(string('version')), str_])
+version = tag(('ve', string_c('version')),
+              ('version', string        ))
 
-type_ = tag(seq(munch(string('sparky')), 
-                str_, 
-                munch(string('file'))))
+type_ = tag(('sp'  , string_c('sparky')),
+            ('type', string            ),
+            ('fi'  , string_c('file')  ))
 
 project = node('project',
                 ('type'   , type_       ),

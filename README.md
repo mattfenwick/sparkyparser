@@ -31,7 +31,9 @@ some awesome science done!
 
     Proj        :=  Type  Version  Block(*)  End
 
-Ignored white space: spaces and tabs
+Insignificant whitespace:
+ - spaces and tabs
+ - tokens are `<`, `>`, newline, string
 
 ## Save file grammar ##
 
