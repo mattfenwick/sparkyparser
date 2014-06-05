@@ -11,6 +11,27 @@ some awesome science done!
 
 ## Project file grammar ##
 
+    End         :=  not0(/./)
+
+    Newline     :=  '\n'
+    
+    Tag(p)      :=  '<'  p  '>'  ( Newline  |  End )
+
+    String      :=  /[^<>\s]+/
+
+    Line        :=  String(+)  Newline
+
+    Datum       :=  Line  |  Block
+
+    Block       :=  Tag(name)  Datum(*)  Tag('end', name)
+    
+    Version     :=  Tag('version', String)
+
+    Type        :=  Tag('sparky', String, 'file')
+
+    Proj        :=  Type  Version  Block(*)  End
+
+Ignored white space: spaces and tabs
 
 ## Save file grammar ##
 

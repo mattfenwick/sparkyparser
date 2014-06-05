@@ -1,0 +1,46 @@
+<sparky save file>
+<version 3.115>
+<user>
+    set mode 0
+    default print command lpr
+    default print options 2 27 1.000000 1.000000
+<end user>
+<spectrum>
+    name hncacb
+    ornament.lineendsize 0.500000
+    <attached data>
+    <end attached data>
+    <view>
+        name hncacb
+        contour.neg 15 -0.6 1.400000 0.000000 green-blue
+        <params>
+            orientation 2 0 1
+            flags 0
+        <end params>
+    <end view>
+    <ornament>
+        type peak
+        color 0 2 0 white
+        flags 0 1 0 0
+        id 62
+        pos 124.403 8.632 42.640
+        height 0.000 -11.269
+        rs |16{?}{?}{?}|1{N}| |16{?}{?}{?}|2{H}| |16{?}{?}{?}|6{?}|
+            [
+                type label
+                color 2 0 0 white
+                flags 0 0 0 1
+                mode 2
+                pos 124.403 8.632 42.640
+                label 16{?}{?}{?}1{N}-2{H}-6{?}
+                xy 124.403,6.632 124.403,34.640 8.632,104.403 8.632,34.640 42.640,104.403 42.640,6.632
+            ]
+        type peak
+        color 0 2 0 white
+        flags 0 1 0 0
+        id 497
+        pos 104.615 9.097 45.376
+        height 0.000 -2.865
+    <end ornament>
+<end spectrum>
+

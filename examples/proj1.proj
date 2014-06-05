@@ -1,0 +1,26 @@
+<sparky project file>
+<version 3.115>
+<savefiles>
+    ../Save/nhsqc.save
+<end savefiles>
+<options>
+<end options>
+<syncaxes>
+    nhsqc 0 hnco 0
+<end syncaxes>
+<overlays>
+<end overlays>
+<attached data>
+<end attached data>
+<molecule>
+    name 
+    <attached data>
+    <end attached data>
+    <condition>
+    name 
+        <resonances>
+            |1{?}{?}{?}|10{?}| 1.93233       1H
+        <end resonances>
+    <end condition>
+<end molecule>
+
