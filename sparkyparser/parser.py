@@ -1,5 +1,5 @@
-from .unparse.combinators import (many0,  pure,  seq,  alt,
-                                  error,  zero,  bind,
+from .unparse.combinators import (many0,  pure,  seq,  alt, fmap,
+                                  error,  zero,  bind, check, get,
                                   seq2L,  position,  not0,  many1)
 from .unparse.cst import (node, cut)
 
@@ -9,6 +9,7 @@ from .unparse.cst import (node, cut)
 
 #### some preliminaries
 
+ws            = oneOf('\n\r\f\t\v ')
 space         = oneOf(' \t')
 not_in_string = oneOf('\n\r\f\t\v <>')
 end           = not0(item)
@@ -22,7 +23,7 @@ def munch(tok):
 newline, lt, gt = map(munch, [oneOf('\n\r\f'), literal('<'), literal('>')])
 
 string = node('string',
-               ('text', munch(many1(not1(not_in_string)))))
+               ('text', fmap(''.join, munch(many1(not1(not_in_string))))))
 
 def string_c(value):
     """
@@ -34,7 +35,10 @@ def string_c(value):
 #### hierarchical forms
 
 def tag(*ps):
-    children = [('open', lt)] + ps + [('close', gt), ('end', alt(newline, end))]
+    children = [('open', lt)]
+    children.extend(ps)
+    children.append(('close', cut('>', gt)))
+    children.append(('end', cut('newline or end', alt(newline, end))))
     return node('tag', *children)
 
 line = node('line',
@@ -45,16 +49,20 @@ block = error('forward declaration for mutual recursion -- replace')
 
 datum = alt(block, line)
 
+_not_end = check(lambda x: x['text'] != 'end', string)
+
 _block = node('block',
-               ('open' , tag(('name', string))     ),
-               ('body' , many0(datum)              ),
-               ('close', tag(('en', string_c('end')), 
-                             ('name', string))))
+               ('open' , tag(('name', many1(_not_end)))),
+               ('body' , many0(datum)                  ),
+               ('close', tag(('en', string_c('end')    ), 
+                             ('name', many1(string)))  ))
 
 def block_check(e):
-    if e['open']['name'] == e['close']['name']:
+    n1s = [n['text'] for n in e['open']['name']] 
+    n2s = [n['text'] for n in e['close']['name']]
+    if n1s == n2s:
         return pure(e)
-    return cut('mismatched open/close names', zero)
+    return cut('mismatched open/close names -- %s and %s' % (n1s, n2s), zero)
 
 block.parse = bind(_block, block_check).parse
 
@@ -66,8 +74,10 @@ type_ = tag(('sp'  , string_c('sparky')),
             ('fi'  , string_c('file')  ))
 
 project = node('project',
-                ('type'   , type_       ),
-                ('version', version     ),
-                ('blocks' , many0(block)),
-                ('end'    , end         ))
+                ('open-ws', many0(ws)               ),
+                ('type'   , cut('type', type_)      ),
+                ('version', cut('version', version) ),
+                ('blocks' , many0(block)            ),
+                ('end-ws' , many0(ws)               ),
+                ('end'    , cut('end of input', end)))
 
